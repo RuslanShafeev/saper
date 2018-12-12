@@ -81,7 +81,8 @@ class Main(QMainWindow):
 
 
     def change_difficulty(self):
-        self.rows, self.cols, self.bombs = Difficulty.get_values(self)
+        okBtnPressed, self.rows, self.cols, self.bombs = Difficulty.get_values(self)
+        print(okBtnPressed)
         # Нужно вынести создание UI в отдельный метод и здесь вызвать его для перерисовки.
 
     def move(self, row, col):
@@ -125,6 +126,6 @@ class Main(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    form = Main(20, 20, 40, 12)
+    form = Main(48, 23, 40, 12)
     form.show()
     sys.exit(app.exec())
