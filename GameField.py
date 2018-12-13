@@ -9,7 +9,7 @@ class GameField:
         self.cell = {
             "empty": "[ ]",
             "untouched": "",
-            "flag": "F",
+            "flag": "\u26F3",
             "question": "?",
             "mark": "{}",
             "bomb": "X"
@@ -36,7 +36,7 @@ class GameField:
             for j in range(self.cols):
                 if self.field[i][j] == self.cell["empty"] or self.field[i][j].isdigit():
                     continue
-                if self.field[i][j] in ("F", "?"):
+                if self.field[i][j] in (self.cell["flag"], self.cell["question"]):
                     continue
                 k += 1
                 if k > self.bombs:
@@ -70,11 +70,17 @@ class GameField:
 
     def open(self, row, col, mode="o"):
         if mode == "f":
+            # если с ? -------------------------
+            # sym, res = self.field[row][col], 0
+            # if sym == self.cell["untouched"]:
+            #     res = self.cell["question"]
+            # elif sym == self.cell["question"]:
+            #     res = self.cell["flag"]
+            # elif sym == self.cell["flag"]:
+            #     res = self.cell["untouched"]
+            # self.field[row][col] = res
             self.field[row][col] = self.cell["untouched"] \
                 if self.field[row][col] == self.cell["flag"] else self.cell["flag"]
-        elif mode == "q":
-            self.field[row][col] = self.cell["untouched"] \
-                if self.field[row][col] == self.cell["question"] else self.cell["question"]
         elif mode == "o":
             if (row, col) in self.b_coords:
                 self.det = -1
