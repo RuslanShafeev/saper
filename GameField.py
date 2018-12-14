@@ -31,15 +31,9 @@ class GameField:
         return k
 
     def check_for_win(self):
-        k = 0
         for i in range(self.rows):
             for j in range(self.cols):
-                if self.field[i][j] == self.cell["empty"] or self.field[i][j].isdigit():
-                    continue
-                if self.field[i][j] in (self.cell["flag"], self.cell["question"]):
-                    continue
-                k += 1
-                if k > self.bombs:
+                if self.field[i][j] == self.cell["untouched"] and (i, j) not in self.b_coords:
                     return False
         return True
 
@@ -54,6 +48,9 @@ class GameField:
         self.generated = True
 
     def open_cells(self, row, col):
+        if self.field[row][col] == self.cell["flag"]:
+            return
+
         bombs = self.bombs_around(row, col)
         if bombs:
             self.field[row][col] = self.cell["mark"].format(bombs)

@@ -9,6 +9,7 @@ class Difficulty(QDialog):
         uic.loadUi('Difficulty.ui', self)
         self.buttonGroup.buttonClicked.connect(self.checked)
         self.mode = (9, 9, 10)
+        self.setWindowTitle("Сложность")
         self.easy.setChecked(True)
         self.okay_clicked = False
         for slider in [self.bombs_slider, self.width_slider, self.height_slider]:
@@ -45,7 +46,6 @@ class Difficulty(QDialog):
         self.bombs_slider.setMaximum(width * height // 3 + 1)
         self.bombs_label.setText(f'[9-{self.bombs_slider.maximum()}]')
         self.mode = (height, width, bombs)
-
 
 
 if __name__ == '__main__':

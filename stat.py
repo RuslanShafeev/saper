@@ -9,18 +9,29 @@ MODE_HARD = "hard"
 
 class GameStat:
     def __init__(self):
-        with open(FILE_PATH) as file:
-            self.stat = json.loads(file.read())
+        try:
+            with open(FILE_PATH) as file:
+                self.stat = json.loads(file.read())
+        except FileNotFoundError:
+            self.stat = {}
 
     def get_list(self, mode):
-        sl = self.stat[mode]
+        sl = self.stat[mode] if mode in self.stat else []
         return sorted(sl, key=lambda x: x["time"])
 
     def put(self, mode, player_name, time):
-        self.stat[mode].append({
-            "name": player_name,
-            "time": time
-        })
+        if mode not in self.stat:
+            self.stat[mode] = [
+                {
+                    "name": player_name,
+                    "time": time
+                }]
+        else:
+            self.stat[mode].append(
+                {
+                    "name": player_name,
+                    "time": time
+                })
 
         with open(FILE_PATH, "w") as file:
             file.write(json.dumps(self.stat, sort_keys=True, indent=4))

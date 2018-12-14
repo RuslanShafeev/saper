@@ -9,7 +9,9 @@ from PyQt5 import QtCore
 from functools import partial
 from GameField import GameField
 from Difficulty import Difficulty
-
+from records import RecordWindow
+from win import WinDialog
+from stat import GameStat
 
 class Main(QMainWindow):
     def __init__(self, x, y, btn_size, bombs):
@@ -31,6 +33,7 @@ class Main(QMainWindow):
         self.SMILE_WIN = ":D"
         self.SMILE_LOSE = "X("
 
+        self.setWindowTitle("Сапёр))")
         self.init_ui(x, y, btn_size, bombs)
 
         self.lcd_smile = QPushButton(self)
@@ -60,8 +63,12 @@ class Main(QMainWindow):
         self.settings = QtWidgets.QMenu(self.menubar)
         self.settings.setTitle('Настройки')
 
-        self.statistic = QtWidgets.QMenu(self.menubar)
+        self.statistic = QtWidgets.QMenu(self)
         self.statistic.setTitle("Статистика")
+
+        self.records = QtWidgets.QAction(self)
+        self.records.setText("Рекорды")
+        self.statistic.addAction(self.records)
 
         self.difficulty = QtWidgets.QAction(self)
         self.difficulty.setText("Сложность")
@@ -71,6 +78,7 @@ class Main(QMainWindow):
         self.menubar.addAction(self.statistic.menuAction())
 
         self.difficulty.triggered.connect(self.change_difficulty)
+        self.records.triggered.connect(self.stat)
 
     def init_ui(self, x, y, size, bombs):
         print(x, y, size, bombs)
@@ -134,13 +142,22 @@ class Main(QMainWindow):
                             self.buttons[i][j].setText(symbol)
                             self.buttons[i][j].setStyleSheet(f'color: {self.colors[symbol]}')
             if self.field.det == 1:
+                for r, c in self.field.b_coords:
+                    self.buttons[r][c].setText(self.field.cell["flag"])
                 self.lcd_smile.setText(self.SMILE_WIN)
-                print('Ветка победы')
+                self.lcd_bombs.display(0)
+                self.showWinDialog()
 
         elif self.field.det == -1:
+            for i in range(self.rows):
+                for j in range(self.cols):
+                    if (i, j) in self.field.b_coords:
+                        self.buttons[i][j].setText("X")
+                    elif self.field.get_field()[i][j] == self.field.cell["flag"]:
+                        self.buttons[i][j].setStyleSheet('color: red')
             for r, c in self.field.b_coords:
                 self.buttons[r][c].setText("X")
-                self.lcd_smile.setText(self.SMILE_LOSE)
+            self.lcd_smile.setText(self.SMILE_LOSE)
 
     def restart(self):
         self.field = GameField(self.rows, self.cols, self.bombs)
@@ -170,6 +187,8 @@ class Main(QMainWindow):
     def mousePressEvent(self, event):
         if not self.field.generated:
             return
+        if self.lcd_bombs_num == 0:
+            return
         if event.button() == QtCore.Qt.RightButton:
             x, y = event.x(), event.y()
             if y < 0:
@@ -185,9 +204,24 @@ class Main(QMainWindow):
             self.lcd_bombs.display(self.lcd_bombs_num)
             self.update_field()
 
+    def showWinDialog(self):
+        args = (self.rows, self.cols, self.bombs)
+        modes = {(9, 9, 10): "Новичок",
+                 (16, 16, 40): "Эксперт",
+                 (16, 30, 99): "Бывалый",
+                 }
+        mode = modes[args] if args in modes else "Особый"
+        time = self.lcd_step.intValue()
+        wd = WinDialog(mode, self.lcd_step.intValue())
+        name = wd.show()
+        GameStat().put(mode, name, time)
+
+    def stat(self):
+        RecordWindow().show()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    form = Main(48, 23, 40, 12)
+    form = Main(16, 16, 40, 40)
     form.show()
     sys.exit(app.exec())
