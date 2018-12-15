@@ -1,8 +1,8 @@
 import json
 
 
-RECORDS_PATH = "D:/saper_game_records.json"
-STATISTICS_PATH = "D:/saper_game_stats.json"
+RECORDS_PATH = "E:/saper_game_records.json"
+STATISTICS_PATH = "E:/saper_game_stats.json"
 
 
 class GameStat:

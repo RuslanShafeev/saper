@@ -2,13 +2,12 @@ import sys
 import time
 
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QRadioButton, QHBoxLayout, \
-    QLCDNumber, QMainWindow
+from PyQt5.QtWidgets import QApplication, QPushButton, QLCDNumber, QMainWindow
 from PyQt5 import QtGui
 from PyQt5 import QtCore
 from functools import partial
 from GameField import GameField
-from Difficulty import Difficulty
+from difficulty import DifficultyWindow
 from records import RecordWindow
 from win import WinDialog
 from results import GameStat
@@ -124,7 +123,8 @@ class Main(QMainWindow):
             line = []
             for j in range(self.cols):
                 button = QPushButton('', self)
-                button.setGeometry(j * self.btn_size, i * self.btn_size + 86, self.btn_size, self.btn_size)
+                button.setGeometry(j * self.btn_size, i * self.btn_size + 86, self.btn_size,
+                                   self.btn_size)
                 button.setFont(QtGui.QFont("MS Shell Dlg 2", 10, QtGui.QFont.Bold))
                 button.clicked.connect(partial(self.move, i, j))
                 button.show()
@@ -136,7 +136,7 @@ class Main(QMainWindow):
 
     # смена режима сложности
     def change_difficulty(self):
-        clicked, rows, cols, bombs = Difficulty().get_values()
+        clicked, rows, cols, bombs = DifficultyWindow().get_values()
         if clicked:
             self.init_ui(cols, rows, self.btn_size, bombs)
 
@@ -166,6 +166,7 @@ class Main(QMainWindow):
                         self.buttons[i][j].setText(symbol)
                     elif symbol:
                         self.buttons[i][j].setEnabled(False)
+                        self.buttons[i][j].setStyleSheet('color: rgb(204, 204, 204)')
                         if symbol.isdigit():
                             self.buttons[i][j].setText(symbol)
                             self.buttons[i][j].setStyleSheet(f'color: {self.colors[symbol]}')

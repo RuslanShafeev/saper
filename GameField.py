@@ -49,12 +49,11 @@ class GameField:
     def generate_field(self, row, col):
         bombs = 0
         arr = []
-        for i in range(self.rows * self.cols):
-            r1 = i // self.rows
-            c1 = i % self.cols
-            if OptionsFile().read()[0] and (r1, c1) == (row, col):
-                continue
-            arr.append((r1, c1))
+        for r in range(self.rows):
+            for c in range(self.cols):
+                if OptionsFile().read()[0] and (r, c) == (row, col):
+                    continue
+                arr.append((r, c))
 
         while bombs != self.bombs:
             rnd = random.choice(arr)
