@@ -9,7 +9,7 @@ class WinDialog(QDialog):
     def __init__(self, mode, time):
         super().__init__()
         uic.loadUi('win.ui', self)
-        self.setWindowTitle("Статистика")
+        self.setWindowTitle("Спасибо за мир без бомб!")
         self.setFixedSize(400, 190)
         self.info.setText(self.info.text().format(mode, time))
 

@@ -35,10 +35,3 @@ class GameStat:
 
         with open(FILE_PATH, "w") as file:
             file.write(json.dumps(self.stat, sort_keys=True, indent=4))
-
-
-# gs = GameStat()
-# res = gs.get_list(MODE_EASY)
-# print(res)
-# gs.put(MODE_EASY, "Sanya", 58)
-# print(gs.get_list(MODE_EASY))

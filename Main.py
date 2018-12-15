@@ -12,6 +12,9 @@ from Difficulty import Difficulty
 from records import RecordWindow
 from win import WinDialog
 from stat import GameStat
+from options import OptionsWindow
+from options_file import OptionsFile
+
 
 class Main(QMainWindow):
     def __init__(self, x, y, btn_size, bombs):
@@ -55,6 +58,8 @@ class Main(QMainWindow):
         self.lcd_step.setStyleSheet('color: red; background-color: black')
         self.lcd_step.setDigitCount(3)
         self.lcd_step.setSegmentStyle(2)
+        if not OptionsFile().read()[2]:
+            self.lcd_step.hide()
 
         self.menubar = QtWidgets.QMenuBar(self)
         self.setMenuBar(self.menubar)
@@ -74,14 +79,19 @@ class Main(QMainWindow):
         self.difficulty.setText("Сложность")
         self.settings.addAction(self.difficulty)
 
+        self.options = QtWidgets.QAction(self)
+        self.options.setText("Геймплей")
+        self.settings.addAction(self.options)
+
         self.menubar.addAction(self.settings.menuAction())
         self.menubar.addAction(self.statistic.menuAction())
 
         self.difficulty.triggered.connect(self.change_difficulty)
         self.records.triggered.connect(self.stat)
+        self.options.triggered.connect(self.gameplay_settings)
 
+    # перерисовка поля
     def init_ui(self, x, y, size, bombs):
-        print(x, y, size, bombs)
         self.setGeometry(300, 300, x * size, y * size + 86)
         self.setFixedSize(x * size, y * size + 86)
         self.rows, self.cols, self.btn_size, self.bombs = y, x, size, bombs
@@ -112,10 +122,13 @@ class Main(QMainWindow):
 
         self.field = GameField(y, x, bombs)
 
+    # смена режима сложности
     def change_difficulty(self):
-        self.rows, self.cols, self.bombs = Difficulty().get_values()
-        self.init_ui(self.cols, self.rows, self.btn_size, self.bombs)
+        clicked, self.rows, self.cols, self.bombs = Difficulty().get_values()
+        if clicked:
+            self.init_ui(self.cols, self.rows, self.btn_size, self.bombs)
 
+    # нажатие на кнопку поля
     def move(self, row, col):
         if not self.field.generated:
             self.field.generate_field(row, col)
@@ -127,6 +140,7 @@ class Main(QMainWindow):
 
         self.update_field()
 
+    # отображение массива GameField на кнопочное поле
     def update_field(self):
         if self.field.det in (0, 1):
             for i in range(self.rows):
@@ -136,29 +150,34 @@ class Main(QMainWindow):
                         self.buttons[i][j].setText(symbol)
                     elif symbol == self.field.cell["untouched"]:
                         self.buttons[i][j].setText(symbol)
+                    elif symbol == self.field.cell["question"]:
+                        self.buttons[i][j].setText(symbol)
                     elif symbol:
                         self.buttons[i][j].setEnabled(False)
                         if symbol.isdigit():
                             self.buttons[i][j].setText(symbol)
                             self.buttons[i][j].setStyleSheet(f'color: {self.colors[symbol]}')
             if self.field.det == 1:
+                # Победа
                 for r, c in self.field.b_coords:
                     self.buttons[r][c].setText(self.field.cell["flag"])
                 self.lcd_smile.setText(self.SMILE_WIN)
                 self.lcd_bombs.display(0)
-                self.showWinDialog()
+                self.show_win_dialog()
 
         elif self.field.det == -1:
+            # Поражение
             for i in range(self.rows):
                 for j in range(self.cols):
-                    if (i, j) in self.field.b_coords:
+                    if (i, j) in self.field.b_coords and \
+                            self.field.get_field()[i][j] != self.field.cell["flag"]:
                         self.buttons[i][j].setText("X")
-                    elif self.field.get_field()[i][j] == self.field.cell["flag"]:
+                    elif (i, j) not in self.field.b_coords and \
+                            self.field.get_field()[i][j] == self.field.cell["flag"]:
                         self.buttons[i][j].setStyleSheet('color: red')
-            for r, c in self.field.b_coords:
-                self.buttons[r][c].setText("X")
             self.lcd_smile.setText(self.SMILE_LOSE)
 
+    # Нажатие на смайлик - заново
     def restart(self):
         self.field = GameField(self.rows, self.cols, self.bombs)
         for i in range(self.rows):
@@ -172,6 +191,7 @@ class Main(QMainWindow):
         self.lcd_smile.setText(self.SMILE_DEFAULT)
         self.timer.stop()
 
+    # Запуск секундомера
     def stopwatch(self):
         self.timer = QtCore.QTimer(self)
         self.timer.setSingleShot(False)
@@ -179,11 +199,13 @@ class Main(QMainWindow):
         self.timer.start()
         self.start_time = time.time()
 
+    # Обновление дисплея времени
     def update_timer(self):
         if self.field.det != 0:
             self.timer.stop()
         self.lcd_step.display(round(time.time() - self.start_time))
 
+    # Обработка нажатия правой кнопкой мыши
     def mousePressEvent(self, event):
         if not self.field.generated:
             return
@@ -196,15 +218,16 @@ class Main(QMainWindow):
             row, col = (y - 86) // self.btn_size, x // self.btn_size
             if self.buttons[row][col].text().isdigit():
                 return
-            if self.buttons[row][col].text() == self.field.cell["flag"]:
-                self.lcd_bombs_num += 1
-            else:
-                self.lcd_bombs_num -= 1
             self.field.open(row, col, mode="f")
+            if self.field.get_field()[row][col] == self.field.cell["flag"]:
+                self.lcd_bombs_num -= 1
+            elif self.lcd_bombs_num < self.bombs:
+                self.lcd_bombs_num += 1
             self.lcd_bombs.display(self.lcd_bombs_num)
             self.update_field()
 
-    def showWinDialog(self):
+    # Показать диалоговое окно с победой
+    def show_win_dialog(self):
         args = (self.rows, self.cols, self.bombs)
         modes = {(9, 9, 10): "Новичок",
                  (16, 16, 40): "Эксперт",
@@ -216,8 +239,18 @@ class Main(QMainWindow):
         name = wd.show()
         GameStat().put(mode, name, time)
 
+    # Показать диалоговое окно с таблицей рекордов
     def stat(self):
         RecordWindow().show()
+
+    # Показать диалоговое окно с опциями и изменить видимость дисплея времени
+    def gameplay_settings(self):
+        args = OptionsWindow().show()
+        time = args[2]
+        if not time:
+            self.lcd_step.hide()
+        else:
+            self.lcd_step.show()
 
 
 if __name__ == '__main__':

@@ -16,9 +16,12 @@ class Difficulty(QDialog):
             slider.valueChanged.connect(self.recalculate_sliders)
 
     def get_values(self):
-        ex = Difficulty()
-        ex.exec()
-        return ex.get_mode()
+        self.exec()
+        return (self.okay_clicked, *self.get_mode())
+
+    def accept(self):
+        self.okay_clicked = True
+        super().accept()
 
     def checked(self):
         modes = {'Новичок': (9, 9, 10),
