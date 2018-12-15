@@ -1,7 +1,7 @@
 import sys
 from PyQt5 import uic
 from PyQt5.QtWidgets import QApplication, QWidget, QDialog, QTableWidgetItem
-from stat import GameStat
+from results import GameStat
 from random import randint
 
 

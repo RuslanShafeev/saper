@@ -11,9 +11,10 @@ from GameField import GameField
 from Difficulty import Difficulty
 from records import RecordWindow
 from win import WinDialog
-from stat import GameStat
+from results import GameStat
 from options import OptionsWindow
 from options_file import OptionsFile
+from stats import StatsDialog
 
 
 class Main(QMainWindow):
@@ -35,6 +36,11 @@ class Main(QMainWindow):
         self.SMILE_DEFAULT = ":)"
         self.SMILE_WIN = ":D"
         self.SMILE_LOSE = "X("
+        self.modes = {
+            (9, 9, 10): "Новичок",
+            (16, 16, 40): "Эксперт",
+            (16, 30, 99): "Бывалый",
+        }
 
         self.setWindowTitle("Сапёр))")
         self.init_ui(x, y, btn_size, bombs)
@@ -68,12 +74,16 @@ class Main(QMainWindow):
         self.settings = QtWidgets.QMenu(self.menubar)
         self.settings.setTitle('Настройки')
 
-        self.statistic = QtWidgets.QMenu(self)
-        self.statistic.setTitle("Статистика")
+        self.results = QtWidgets.QMenu(self)
+        self.results.setTitle("Результаты")
 
         self.records = QtWidgets.QAction(self)
         self.records.setText("Рекорды")
-        self.statistic.addAction(self.records)
+        self.results.addAction(self.records)
+
+        self.statisctics = QtWidgets.QAction(self)
+        self.statisctics.setText("Статистика")
+        self.results.addAction(self.statisctics)
 
         self.difficulty = QtWidgets.QAction(self)
         self.difficulty.setText("Сложность")
@@ -84,11 +94,12 @@ class Main(QMainWindow):
         self.settings.addAction(self.options)
 
         self.menubar.addAction(self.settings.menuAction())
-        self.menubar.addAction(self.statistic.menuAction())
+        self.menubar.addAction(self.results.menuAction())
 
         self.difficulty.triggered.connect(self.change_difficulty)
-        self.records.triggered.connect(self.stat)
+        self.records.triggered.connect(self.records_click)
         self.options.triggered.connect(self.gameplay_settings)
+        self.statisctics.triggered.connect(self.stats)
 
     # перерисовка поля
     def init_ui(self, x, y, size, bombs):
@@ -121,12 +132,13 @@ class Main(QMainWindow):
             self.buttons.append(line)
 
         self.field = GameField(y, x, bombs)
+        self.mode = self.modes[(y, x, bombs)] if (y, x, bombs) in self.modes else "Особый"
 
     # смена режима сложности
     def change_difficulty(self):
-        clicked, self.rows, self.cols, self.bombs = Difficulty().get_values()
+        clicked, rows, cols, bombs = Difficulty().get_values()
         if clicked:
-            self.init_ui(self.cols, self.rows, self.btn_size, self.bombs)
+            self.init_ui(cols, rows, self.btn_size, bombs)
 
     # нажатие на кнопку поля
     def move(self, row, col):
@@ -157,25 +169,35 @@ class Main(QMainWindow):
                         if symbol.isdigit():
                             self.buttons[i][j].setText(symbol)
                             self.buttons[i][j].setStyleSheet(f'color: {self.colors[symbol]}')
+
             if self.field.det == 1:
                 # Победа
+                flags, win = 0, 1
                 for r, c in self.field.b_coords:
+                    if self.field.get_field()[r][c] == self.field.cell["flag"]:
+                        flags += 1
                     self.buttons[r][c].setText(self.field.cell["flag"])
                 self.lcd_smile.setText(self.SMILE_WIN)
                 self.lcd_bombs.display(0)
                 self.show_win_dialog()
+                GameStat().update_stats(self.mode, win, flags, flags, self.lcd_step.intValue())
 
         elif self.field.det == -1:
             # Поражение
+            flags, defused, win = 0, 0, 0
             for i in range(self.rows):
                 for j in range(self.cols):
-                    if (i, j) in self.field.b_coords and \
-                            self.field.get_field()[i][j] != self.field.cell["flag"]:
-                        self.buttons[i][j].setText("X")
-                    elif (i, j) not in self.field.b_coords and \
-                            self.field.get_field()[i][j] == self.field.cell["flag"]:
-                        self.buttons[i][j].setStyleSheet('color: red')
+                    if self.field.get_field()[i][j] == self.field.cell["flag"]:
+                        flags += 1
+                        if (i, j) in self.field.b_coords:
+                            defused += 1
+                        else:
+                            self.buttons[i][j].setStyleSheet('color: red')
+                    else:
+                        if (i, j) in self.field.b_coords:
+                            self.buttons[i][j].setText("X")
             self.lcd_smile.setText(self.SMILE_LOSE)
+            GameStat().update_stats(self.mode, win, flags, defused, self.lcd_step.intValue())
 
     # Нажатие на смайлик - заново
     def restart(self):
@@ -228,20 +250,18 @@ class Main(QMainWindow):
 
     # Показать диалоговое окно с победой
     def show_win_dialog(self):
-        args = (self.rows, self.cols, self.bombs)
-        modes = {(9, 9, 10): "Новичок",
-                 (16, 16, 40): "Эксперт",
-                 (16, 30, 99): "Бывалый",
-                 }
-        mode = modes[args] if args in modes else "Особый"
         time = self.lcd_step.intValue()
-        wd = WinDialog(mode, self.lcd_step.intValue())
+        wd = WinDialog(self.mode, self.lcd_step.intValue())
         name = wd.show()
-        GameStat().put(mode, name, time)
+        GameStat().put_record(self.mode, name, time)
 
     # Показать диалоговое окно с таблицей рекордов
-    def stat(self):
+    def records_click(self):
         RecordWindow().show()
+
+    # Показать диалоговое окно со статистикой
+    def stats(self):
+        StatsDialog().show()
 
     # Показать диалоговое окно с опциями и изменить видимость дисплея времени
     def gameplay_settings(self):

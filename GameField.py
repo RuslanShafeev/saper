@@ -48,16 +48,20 @@ class GameField:
     # В зависимости от опции "Безопасный старт", положение бомб может находится на кнопке старта
     def generate_field(self, row, col):
         bombs = 0
+        arr = []
+        for i in range(self.rows * self.cols):
+            r1 = i // self.rows
+            c1 = i % self.cols
+            if OptionsFile().read()[0] and (r1, c1) == (row, col):
+                continue
+            arr.append((r1, c1))
+
         while bombs != self.bombs:
-            r, c = random.randint(0, self.rows - 1), random.randint(0, self.cols - 1)
-            if OptionsFile().read()[0]:
-                if not (r, c) in self.b_coords and (r != row or c != col):
-                    self.b_coords.append((r, c))
-                    bombs += 1
-            else:
-                if not (r, c) in self.b_coords:
-                    self.b_coords.append((r, c))
-                    bombs += 1
+            rnd = random.choice(arr)
+            self.b_coords.append(rnd)
+            arr.remove(rnd)
+            bombs += 1
+
         self.open(row, col, "o")
         self.generated = True
 
