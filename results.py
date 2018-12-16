@@ -89,6 +89,8 @@ class GameStat:
         return int(self.get_time(mode) / games)
 
     def update_stats(self, mode, win, flags, defused, time):
+        if mode == 'Особый':
+            return
         for m in (mode, "Итого"):
             self.stat[m]["games"] += 1
             self.stat[m]["wins"] += win
