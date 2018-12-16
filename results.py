@@ -1,8 +1,8 @@
 import json
 
 
-RECORDS_PATH = "E:/saper_game_records.json"
-STATISTICS_PATH = "E:/saper_game_stats.json"
+RECORDS_PATH = "D:/saper_game_records.json"
+STATISTICS_PATH = "D:/saper_game_stats.json"
 
 
 class GameStat:
@@ -73,14 +73,14 @@ class GameStat:
     def get_win_rate(self, mode):
         games = self.get_games(mode)
         if games == 0:
-            return 0
-        return 100 * int(self.get_wins(mode) / games)
+            return 0.0
+        return round(self.get_wins(mode) / games * 100, 2)
 
     def get_defuse_rate(self, mode):
         flags = self.get_flags(mode)
         if flags == 0:
-            return 0
-        return 100 * int(self.get_defused(mode) / flags)
+            return 0.0
+        return round(self.get_defused(mode) / flags * 100, 2)
 
     def get_average_time(self, mode):
         games = self.get_games(mode)
