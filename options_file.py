@@ -1,4 +1,4 @@
-class OptionsFile():
+class OptionsFile:
     def __init__(self):
         self.PATH = "D:/saper_options"
 
@@ -6,7 +6,7 @@ class OptionsFile():
         try:
             with open(self.PATH) as file:
                 return tuple(map(eval, file.read().split()))
-        except:
+        except Exception:
             return True, False, True
 
     def write(self, start, question, box):

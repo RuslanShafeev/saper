@@ -158,16 +158,13 @@ class Main(QMainWindow):
             for i in range(self.rows):
                 for j in range(self.cols):
                     symbol = self.field.get_field()[i][j]
-                    if symbol == self.field.cell["flag"]:
-                        self.buttons[i][j].setText(symbol)
-                    elif symbol == self.field.cell["untouched"]:
-                        self.buttons[i][j].setText(symbol)
-                    elif symbol == self.field.cell["question"]:
+                    if symbol in [self.field.cell[i] for i in ["flag", "untouched", "question"]]:
                         self.buttons[i][j].setText(symbol)
                     elif symbol:
-                        self.buttons[i][j].setEnabled(False)
-                        self.buttons[i][j].setStyleSheet('color: rgb(204, 204, 204)')
-                        if symbol.isdigit():
+                        if self.buttons[i][j].isEnabled():
+                            self.buttons[i][j].setEnabled(False)
+                            self.buttons[i][j].setStyleSheet('color: rgb(204, 204, 204)')
+                        if symbol.isdigit() and not self.buttons[i][j].text().isdigit():
                             self.buttons[i][j].setText(symbol)
                             self.buttons[i][j].setStyleSheet(f'color: {self.colors[symbol]}')
 
